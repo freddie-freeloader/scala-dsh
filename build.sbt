@@ -21,3 +21,4 @@ libraryDependencies ++= Seq(
   "org.tpolecat" %% "doobie-contrib-postgresql" % doobieVersion,
   "org.scalaz"   %% "scalaz-core"               % "7.1.6"
 )
+

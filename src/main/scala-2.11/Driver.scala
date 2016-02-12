@@ -5,11 +5,15 @@ import io.circe.Decoder.Result
 import io.getquill.ast.Ast
 import scala.sys.process._
 import doobie.imports._, scalaz.effect.IO
+import scalaz._, Scalaz._
 
+/**
+  * Collection of functions for Prototype
+  */
 object Driver {
 
   def toCL(ast: Ast) : Expr = ast match {
-    case _ => Prototype ("(let t = table(person, [id::Int, name::String, age::Int], [[id]])::[(Int,String,Int)] in ([(([ (((xz::(Int,String,Int)).3::Int) + ((xy::(Int,String,Int)).1::Int))::Int | xz <- (t::[(Int,String,Int)]) ]::[Int]),((xy::(Int,String,Int)).1::Int))::([Int],Int) | xy <- (t::[(Int,String,Int)]) ]::[([Int],Int)]))::[([Int],Int)]")
+    case _ => Static("(let t = table(person, [id::Int, name::String, age::Int], [[id]])::[(Int,String,Int)] in ([(([ (((xz::(Int,String,Int)).3::Int) + ((xy::(Int,String,Int)).1::Int))::Int | xz <- (t::[(Int,String,Int)]) ]::[Int]),((xy::(Int,String,Int)).1::Int))::([Int],Int) | xy <- (t::[(Int,String,Int)]) ]::[([Int],Int)]))::[([Int],Int)]")
   }
 
   def toJson(e: Expr) : Json = {
@@ -35,8 +39,8 @@ object Driver {
     println(q2)
 
     val fQ = for {
-      a <- sql"SELECT a0.id AS k1, a0.id AS o1, a0.id AS i1 FROM person AS a0 ORDER BY o1 ASC;".query[(Int,Int,Int)].list
-      b <- sql"SELECT a1.id AS r1, a1.id AS o1, a2.id AS o2,        (a2.age + a1.id) AS i1 FROM person AS a1,      person AS a2 ORDER BY r1 ASC, o1 ASC, o2 ASC;".query[(Int,Int,Int,Int)].list
+      a <- HC.process[(Int,Int,Int)](q1, ().point[PreparedStatementIO]).list
+      b <- HC.process[(Int,Int,Int)](q2, ().point[PreparedStatementIO]).list
     } yield (a,b)
 
     val res = fQ.transact(xa).unsafePerformIO
@@ -62,6 +66,8 @@ object Driver {
       m2 <- m1.downArray
       m3 <- m2.first
     } yield m3.focus
+
+
 
     n1.getOrElse(Json.empty).as[String]
   }

@@ -1,11 +1,8 @@
-import cats.Show
-import cats.syntax.show._
+/**
+  * Just for prototyping
+  */
 
 object Expr {
-  sealed trait Expr {
-    override def toString = this match {
-      case Prototype(s) => s
-    }
-  }
-  case class Prototype(s: String) extends Expr
+  sealed trait Expr
+  case class Static(s: String) extends Expr
 }
