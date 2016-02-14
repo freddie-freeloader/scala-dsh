@@ -3,6 +3,9 @@ import cats._
 import cats.syntax.monadFilter._
 import cats.syntax.functor._
 import cats.syntax.flatMap._
+import runMacro._
+import scala.language.experimental.macros
+
 
 object AST {
 
@@ -23,18 +26,25 @@ object AST {
       def flatMap[A,B](fa: Query[A])(f: A => Query[B]) : Query[B] = Bind(fa, f)
     }
 
-  def run[A](q: Query[A]) : Option[A] = q match {
+  def eval[A](q: Query[A]) : Option[A] = q match {
     case Scalar(a) => Some(a)
-    case FlatMap(f,e) => run(e).flatMap(x =>Some(f(x)))
+    case FlatMap(f,e) => eval(e).flatMap(x =>Some(f(x)))
     case Bind(e,f) => for {
-      x0 <- run(e)
-      x1 <- run(f(x0))
+      x0 <- eval(e)
+      x1 <- eval(f(x0))
     } yield x1
     case Null => None
   }
+
+  case class CL[A](cl: String, q: Query[A])
+
+  // TODO
+  //def run[A](q: Query[A]) : Option[A] = macro runMacro
 
   val q = for {
     x <- Scalar(38) : Query[Int] if x > 0
     y <- Scalar(4) : Query[Int]
   } yield x + y
+
+
 }
