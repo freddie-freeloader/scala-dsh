@@ -5,16 +5,31 @@ import cats.syntax.functor._
 import cats.syntax.flatMap._
 import runMacro._
 import scala.language.experimental.macros
+import scala.reflect.runtime.universe._
 
 
 object AST {
 
-  sealed trait Query[+T]
+  // TODO Type lambdas needed for *instance Monad (Query s)*
+  sealed trait Query[+S,+T]
 
-  case class Scalar[T](x: T) extends Query[T]
-  case class FlatMap[S,T](f: S => T, e: Query[S]) extends Query[T]
-  case class Bind[S,T](e: Query[S], f: S => Query[T]) extends Query[T]
-  case object Null extends Query[Nothing]
+  case class Scalar[T](x: T) extends Query[T,T]
+  case class FlatMap[S,T](f: S => T, e: Query[S,T]) extends Query[S,T]
+  case class Bind[S,T](e: Query[S], f: S => Query[S,T]) extends Query[S,T]
+  case object Null extends Query[Nothing,Nothing]
+
+  trait withKey[K] {
+    val key : K
+  }
+
+  case class Person(id : Int, name: String)
+
+  case class Table[K,T](k: K)(implicit tag: TypeTag[T]) extends Query[K,T] {
+    val key = k
+  }
+
+  def getKey[K,T](t: Table[K,T]) : K = t.key
+
 
   implicit def queryMonadFilter : MonadFilter[Query] =
     new MonadFilter[Query] {
@@ -40,6 +55,10 @@ object AST {
 
   // TODO
   //def run[A](q: Query[A]) : Option[A] = macro runMacro
+  val q2 = for {
+     p <- Table[Person]
+     n <- Scalar(38)
+  } yield n + p.id
 
   val q = for {
     x <- Scalar(38) : Query[Int] if x > 0
