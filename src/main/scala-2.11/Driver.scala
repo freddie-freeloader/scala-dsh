@@ -2,7 +2,7 @@ import Expr._
 import cats.data.Xor
 import io.circe._, io.circe.Json
 import io.circe.Decoder.Result
-import io.getquill.ast.Ast
+import io.getquill.ast._
 import scala.sys.process._
 import doobie.imports._, scalaz.effect.IO
 import scalaz._, Scalaz._
@@ -12,7 +12,11 @@ import scalaz._, Scalaz._
   */
 object Driver {
 
+  def printCL(ast: Ast) : String = ast match {
+    case Entity()
+  }
   def toCL(ast: Ast) : Expr = ast match {
+    case Entity(name, _,_) => Static(name)
     case _ => Static("(let t = table(person, [id::Int, name::String, age::Int], [[id]])::[(Int,String,Int)] in ([(([ (((xz::(Int,String,Int)).3::Int) + ((xy::(Int,String,Int)).1::Int))::Int | xz <- (t::[(Int,String,Int)]) ]::[Int]),((xy::(Int,String,Int)).1::Int))::([Int],Int) | xy <- (t::[(Int,String,Int)]) ]::[([Int],Int)]))::[([Int],Int)]")
   }
 

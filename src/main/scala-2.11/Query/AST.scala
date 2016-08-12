@@ -10,6 +10,13 @@ import scala.reflect.runtime.universe._
 
 object AST {
 
+  def columnRep(t: Type): List[(String, String, Boolean)] = {
+    val columnname = t.decls.map(_.name.decodedName.toString).takeWhile(_ != "<init>").map(_.trim)
+    val isKey = t.decls.map(_.typeSignature.baseClasses.map(_.name.toString).contains("Key"))
+    val columnType = t.decls.map(_.typeSignature.typeSymbol.name.decodedName.toString).takeWhile(_ != "<none>").toList
+
+    (columnname, columnType, isKey).zipped.toList.distinct
+  }
   // TODO Type lambdas needed for *instance Monad (Query s)*
   sealed trait Query[+T]
 
@@ -17,6 +24,8 @@ object AST {
   case class FlatMap[S,T](f: S => T, e: Query[T]) extends Query[T]
   case class Bind[S,T](e: Query[S], f: S => Query[T]) extends Query[T]
   case object Null extends Query[Nothing]
+
+
 
   trait withKey[K] {
     val key : K
@@ -59,6 +68,7 @@ object AST {
   object IntS extends SQLType
   object StringS extends SQLType
 
+  def printQ[T](q: Query[T]) : String = macro runimpl[T]
 
 
   val q2 = for {
